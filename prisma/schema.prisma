@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id               Int          @id @default(autoincrement())
+  nome             String
+  email            String       @unique
+  senhaHash        String
+  papel            String       @default("CLIENTE")
+  versaoSessao     Int          @default(0)
+  criadoEm         DateTime     @default(now())
+  solicitacoes     Solicitacao[]
+  recuperacao      Recuperacao?
+}
+
+model Plano {
+  id                Int          @id @default(autoincrement())
+  nome              String
+  velocidadeMbps    Int
+  precoCentavos     Int
+  ativo             Boolean      @default(true)
+  criadoEm          DateTime     @default(now())
+  solicitacoes      Solicitacao[]
+}
+
+model Solicitacao {
+  id         Int      @id @default(autoincrement())
+  usuarioId  Int
+  planoId    Int
+  status     String   @default("PENDENTE")
+  criadoEm   DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  plano      Plano    @relation(fields: [planoId], references: [id], onDelete: Restrict)
+
+  @@index([usuarioId])
+  @@index([planoId])
+}
+
+model Recuperacao {
+  usuarioId Int      @id
+  tokenHash String   @unique
+  expiraEm  DateTime
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+}
